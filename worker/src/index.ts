@@ -33,8 +33,12 @@ async function handleTranscribe(request: Request, env: Env): Promise<Response> {
       return jsonResponse({ error: 'Missing audio file' }, 400);
     }
 
+    // 用 arrayBuffer 重建 Blob，避免 Cloudflare Worker 转发 File 对象时序列化异常
+    const fileBuffer = await audioFile.arrayBuffer();
+    const fileBlob = new Blob([fileBuffer], { type: audioFile.type || 'audio/webm' });
+
     const groqForm = new FormData();
-    groqForm.append('file', audioFile);
+    groqForm.append('file', fileBlob, audioFile.name || 'audio.webm');
     groqForm.append('model', 'whisper-large-v3-turbo');
     groqForm.append('language', 'zh');
     groqForm.append('response_format', 'json');
