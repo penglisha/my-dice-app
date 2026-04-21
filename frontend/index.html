@@ -433,9 +433,13 @@
   async function transcribeAndHandle(blob) {
     setStatus('识别中…');
     try {
-      const form = new FormData();
-      form.append('file', blob, 'audio.webm');
-      const res = await fetch(`${WORKER_URL}/transcribe`, { method: 'POST', body: form });
+      // 直接发原始二进制，Content-Type 设为录音 MIME type
+      // Worker 用 request.arrayBuffer() 读取，避免 FormData 解析损坏 WebM 数据
+      const res = await fetch(`${WORKER_URL}/transcribe`, {
+        method: 'POST',
+        headers: { 'Content-Type': blob.type },
+        body: blob,
+      });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       const text = (data.text || '').trim();

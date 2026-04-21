@@ -26,19 +26,21 @@ export default {
 
 async function handleTranscribe(request: Request, env: Env): Promise<Response> {
   try {
-    const formData = await request.formData();
-    const audioFile = formData.get('file');
+    // 直接读取原始二进制，绕过 formData() 解析 WebM 时可能损坏数据的问题
+    const audioBuffer = await request.arrayBuffer();
 
-    if (!audioFile || !(audioFile instanceof File)) {
-      return jsonResponse({ error: 'Missing audio file' }, 400);
+    if (audioBuffer.byteLength === 0) {
+      return jsonResponse({ error: 'Audio file is empty' }, 400);
     }
 
-    // 用 arrayBuffer 重建 Blob，避免 Cloudflare Worker 转发 File 对象时序列化异常
-    const fileBuffer = await audioFile.arrayBuffer();
-    const fileBlob = new Blob([fileBuffer], { type: audioFile.type || 'audio/webm' });
+    // Content-Type 由前端设置（如 audio/webm），裁掉 codec 参数
+    const rawMime = request.headers.get('Content-Type') || 'audio/webm';
+    const baseMime = rawMime.split(';')[0].trim();
+
+    const fileBlob = new Blob([audioBuffer], { type: baseMime });
 
     const groqForm = new FormData();
-    groqForm.append('file', fileBlob, audioFile.name || 'audio.webm');
+    groqForm.append('file', fileBlob, 'audio.webm');
     groqForm.append('model', 'whisper-large-v3-turbo');
     groqForm.append('language', 'zh');
     groqForm.append('response_format', 'json');
