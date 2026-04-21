@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎲 飞行棋骰子助手</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: 'Rounded Mplus 1c', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      padding: 24px 16px;
+      color: #fff;
+    }
+
+    h1 {
+      font-size: clamp(1.6rem, 5vw, 2.4rem);
+      text-shadow: 0 2px 8px rgba(0,0,0,.3);
+      letter-spacing: 2px;
+    }
+
+    /* ── 3D Dice ── */
+    .scene {
+      width: 160px;
+      height: 160px;
+      perspective: 600px;
+    }
+
+    .cube {
+      width: 160px;
+      height: 160px;
+      position: relative;
+      transform-style: preserve-3d;
+      transform: rotateX(0deg) rotateY(0deg);
+      transition: transform 1.2s ease-out;
+    }
+
+    .face {
+      position: absolute;
+      width: 160px;
+      height: 160px;
+      background: #fff;
+      border-radius: 16px;
+      border: 3px solid #ddd;
+      box-shadow: inset 0 0 12px rgba(0,0,0,.08);
+      display: grid;
+      padding: 18px;
+    }
+
+    .face.front  { transform: translateZ(80px); }
+    .face.back   { transform: rotateY(180deg)  translateZ(80px); }
+    .face.left   { transform: rotateY(-90deg)  translateZ(80px); }
+    .face.right  { transform: rotateY(90deg)   translateZ(80px); }
+    .face.top    { transform: rotateX(90deg)   translateZ(80px); }
+    .face.bottom { transform: rotateX(-90deg)  translateZ(80px); }
+
+    .dot {
+      width: 22px;
+      height: 22px;
+      background: #222;
+      border-radius: 50%;
+    }
+
+    /* face-1 */
+    .face-1 { place-items: center; }
+    /* face-2 */
+    .face-2 {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+    }
+    .face-2 .dot:nth-child(1) { grid-column:1; grid-row:1; align-self:start; justify-self:start; }
+    .face-2 .dot:nth-child(2) { grid-column:2; grid-row:2; align-self:end;   justify-self:end;   }
+    /* face-3 */
+    .face-3 {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr 1fr;
+    }
+    .face-3 .dot:nth-child(1) { grid-column:1; grid-row:1; align-self:start; justify-self:start; }
+    .face-3 .dot:nth-child(2) { grid-column:2; grid-row:2; place-self:center; }
+    .face-3 .dot:nth-child(3) { grid-column:2; grid-row:3; align-self:end;   justify-self:end;   }
+    /* face-4 */
+    .face-4 {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+    }
+    .face-4 .dot { }
+    .face-4 .dot:nth-child(1) { align-self:start; justify-self:start; }
+    .face-4 .dot:nth-child(2) { align-self:start; justify-self:end;   }
+    .face-4 .dot:nth-child(3) { align-self:end;   justify-self:start; }
+    .face-4 .dot:nth-child(4) { align-self:end;   justify-self:end;   }
+    /* face-5 */
+    .face-5 {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr 1fr;
+    }
+    .face-5 .dot:nth-child(1) { grid-column:1; grid-row:1; align-self:start; justify-self:start; }
+    .face-5 .dot:nth-child(2) { grid-column:2; grid-row:1; align-self:start; justify-self:end;   }
+    .face-5 .dot:nth-child(3) { grid-column:1; grid-row:2; place-self:center start; }
+    .face-5 .dot:nth-child(4) { grid-column:2; grid-row:2; place-self:center end; }
+    .face-5 .dot:nth-child(5) { grid-column:1; grid-row:3; align-self:end; justify-self:start; }
+    .face-5 .dot:nth-child(6) { grid-column:2; grid-row:3; align-self:end; justify-self:end;   }
+    /* face-5 centre dot */
+    .face-5-centre {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr 1fr;
+    }
+    /* face-6 */
+    .face-6 {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr 1fr;
+    }
+    .face-6 .dot:nth-child(1) { grid-column:1; grid-row:1; align-self:start; justify-self:start; }
+    .face-6 .dot:nth-child(2) { grid-column:2; grid-row:1; align-self:start; justify-self:end;   }
+    .face-6 .dot:nth-child(3) { grid-column:1; grid-row:2; place-self:center start; }
+    .face-6 .dot:nth-child(4) { grid-column:2; grid-row:2; place-self:center end; }
+    .face-6 .dot:nth-child(5) { grid-column:1; grid-row:3; align-self:end; justify-self:start; }
+    .face-6 .dot:nth-child(6) { grid-column:2; grid-row:3; align-self:end; justify-self:end;   }
+
+    /* ── Result text ── */
+    #result {
+      font-size: clamp(1.4rem, 5vw, 2rem);
+      font-weight: 700;
+      text-shadow: 0 2px 6px rgba(0,0,0,.25);
+      min-height: 2.4rem;
+      opacity: 0;
+      transition: opacity .5s ease;
+    }
+    #result.show { opacity: 1; }
+
+    /* ── Controls ── */
+    .controls {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    #toggleBtn {
+      width: 100%;
+      padding: 14px 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      background: linear-gradient(90deg, #f7971e, #ffd200);
+      color: #333;
+      box-shadow: 0 4px 14px rgba(0,0,0,.25);
+      transition: transform .1s, box-shadow .1s;
+      letter-spacing: 1px;
+    }
+    #toggleBtn:active { transform: scale(.97); box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+    #toggleBtn.active {
+      background: linear-gradient(90deg, #ee0979, #ff6a00);
+      color: #fff;
+    }
+
+    #status {
+      font-size: .95rem;
+      opacity: .85;
+      text-align: center;
+      min-height: 1.3rem;
+    }
+
+    /* ── mic permission hint ── */
+    #micHint {
+      display: none;
+      background: rgba(255,255,255,.15);
+      border-radius: 12px;
+      padding: 12px 18px;
+      font-size: .9rem;
+      text-align: center;
+      max-width: 320px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🎲 飞行棋骰子助手</h1>
+
+<div class="scene">
+  <div class="cube" id="cube">
+    <!-- 1 -->
+    <div class="face front face-1"><div class="dot"></div></div>
+    <!-- 6 -->
+    <div class="face back face-6">
+      <div class="dot"></div><div class="dot"></div>
+      <div class="dot"></div><div class="dot"></div>
+      <div class="dot"></div><div class="dot"></div>
+    </div>
+    <!-- 2 -->
+    <div class="face right face-2"><div class="dot"></div><div class="dot"></div></div>
+    <!-- 5 -->
+    <div class="face left face-5">
+      <div class="dot"></div><div class="dot"></div>
+      <div class="dot"></div><div class="dot"></div>
+      <div class="dot"></div><div class="dot"></div>
+    </div>
+    <!-- 3 -->
+    <div class="face top face-3">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>
+    <!-- 4 -->
+    <div class="face bottom face-4">
+      <div class="dot"></div><div class="dot"></div>
+      <div class="dot"></div><div class="dot"></div>
+    </div>
+  </div>
+</div>
+
+<div id="result"></div>
+
+<div class="controls">
+  <button id="toggleBtn">🎙️ 开始监听</button>
+  <div id="status">点击按钮开始语音监听</div>
+</div>
+
+<div id="micHint">
+  🎤 需要麦克风权限才能使用语音功能。<br>
+  请在浏览器地址栏点击权限图标，允许访问麦克风后刷新页面。
+</div>
+
+<script>
+  // ── 部署后请将此处替换为你的 Worker URL ──
+  // 格式：https://dice-app-worker.<你的子域>.workers.dev
+  const WORKER_URL = 'https://dice-app-worker.penglisha456.workers.dev';
+
+  const triggerWords = ['你扔', '轮到你', '该你', '到你了', '你来', '机器人扔', '机器人你扔'];
+
+  // 六面的旋转角度（前面=1点朝向屏幕）
+  const faceAngles = {
+    1: { x: 0,   y: 0   },
+    2: { x: 0,   y: -90 },
+    3: { x: -90, y: 0   },
+    4: { x: 90,  y: 0   },
+    5: { x: 0,   y: 90  },
+    6: { x: 0,   y: 180 },
+  };
+
+  const ttsTexts = {
+    1: '唉，才1点，走一步～',
+    2: '2点，还行，走两步！',
+    3: '看我的！3点！',
+    4: '哇，4点，这下厉害了！',
+    5: '耶！5点，我要追上你啦！',
+    6: '哈哈，6点！我最厉害！帮我走六步！',
+  };
+
+  // 累加旋转量（避免动画回转）
+  let totalX = 0;
+  let totalY = 0;
+
+  const cube = document.getElementById('cube');
+  const resultEl = document.getElementById('result');
+  const toggleBtn = document.getElementById('toggleBtn');
+  const statusEl = document.getElementById('status');
+  const micHint = document.getElementById('micHint');
+
+  // ── 骰子滚动 ──
+  function rollDice(n) {
+    const target = faceAngles[n];
+    // 当前最近的等效角度
+    const baseX = totalX % 360;
+    const baseY = totalY % 360;
+    const deltaX = shortestDelta(baseX, target.x);
+    const deltaY = shortestDelta(baseY, target.y);
+    // 附加 720~1080 度随机旋转
+    const extraX = (Math.floor(Math.random() * 2) + 2) * 360 * (Math.random() < .5 ? 1 : -1);
+    const extraY = (Math.floor(Math.random() * 2) + 2) * 360 * (Math.random() < .5 ? 1 : -1);
+    totalX += deltaX + extraX;
+    totalY += deltaY + extraY;
+    cube.style.transform = `rotateX(${totalX}deg) rotateY(${totalY}deg)`;
+  }
+
+  function shortestDelta(current, target) {
+    let d = ((target - current) % 360 + 360) % 360;
+    if (d > 180) d -= 360;
+    return d;
+  }
+
+  function showResult(n) {
+    resultEl.textContent = `我扔了 ${n} 点`;
+    resultEl.classList.remove('show');
+    void resultEl.offsetWidth;
+    resultEl.classList.add('show');
+  }
+
+  function speak(text) {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.lang = 'zh-CN';
+    utt.rate = 1.05;
+    window.speechSynthesis.speak(utt);
+  }
+
+  function triggerRoll() {
+    const n = Math.ceil(Math.random() * 6);
+    rollDice(n);
+    showResult(n);
+    // TTS 在动画结束后播报
+    setTimeout(() => speak(ttsTexts[n]), 1250);
+  }
+
+  // ── 录音 & 语音识别 ──
+  let listening = false;
+  let mediaStream = null;
+  let mediaRecorder = null;
+  let audioCtx = null;
+  let analyser = null;
+  let chunks = [];
+  let loopId = null;
+
+  toggleBtn.addEventListener('click', () => {
+    if (listening) stopListening();
+    else startListening();
+  });
+
+  async function startListening() {
+    try {
+      mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      micHint.style.display = 'block';
+      setStatus('麦克风权限被拒绝，请查看下方提示');
+      return;
+    }
+    listening = true;
+    toggleBtn.textContent = '⏹️ 停止监听';
+    toggleBtn.classList.add('active');
+    setupAudioAnalyser();
+    scheduleRecordCycle();
+  }
+
+  function stopListening() {
+    listening = false;
+    clearTimeout(loopId);
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+    }
+    if (audioCtx) { audioCtx.close(); audioCtx = null; }
+    if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
+    toggleBtn.textContent = '🎙️ 开始监听';
+    toggleBtn.classList.remove('active');
+    setStatus('已停止');
+  }
+
+  function setupAudioAnalyser() {
+    audioCtx = new AudioContext();
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 512;
+    const src = audioCtx.createMediaStreamSource(mediaStream);
+    src.connect(analyser);
+  }
+
+  function getRMS() {
+    const buf = new Float32Array(analyser.fftSize);
+    analyser.getFloatTimeDomainData(buf);
+    let sum = 0;
+    for (const v of buf) sum += v * v;
+    return Math.sqrt(sum / buf.length);
+  }
+
+  function scheduleRecordCycle() {
+    if (!listening) return;
+    setStatus('监听中…');
+    chunks = [];
+    let hasSpeech = false;
+    let silenceStart = null;
+
+    const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+      ? 'audio/webm;codecs=opus'
+      : 'audio/webm';
+    mediaRecorder = new MediaRecorder(mediaStream, { mimeType });
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+
+    mediaRecorder.start(100); // 100ms chunks
+
+    const SILENCE_THRESHOLD = 0.01;
+    const SILENCE_DURATION = 1200;
+    const NO_SPEECH_TIMEOUT = 3000;
+
+    const startTime = Date.now();
+
+    function monitor() {
+      if (!listening || mediaRecorder.state === 'inactive') return;
+      const rms = getRMS();
+      const now = Date.now();
+
+      if (rms > SILENCE_THRESHOLD) {
+        hasSpeech = true;
+        silenceStart = null;
+      } else if (hasSpeech) {
+        if (!silenceStart) silenceStart = now;
+        else if (now - silenceStart >= SILENCE_DURATION) {
+          // 说话后静音 1.2s → 停止并识别
+          mediaRecorder.stop();
+          return;
+        }
+      } else {
+        // 3s 内没检测到语音 → 重新开始
+        if (now - startTime >= NO_SPEECH_TIMEOUT) {
+          mediaRecorder.stop();
+          chunks = []; // 丢弃
+          loopId = setTimeout(scheduleRecordCycle, 100);
+          return;
+        }
+      }
+      requestAnimationFrame(monitor);
+    }
+
+    mediaRecorder.onstart = () => requestAnimationFrame(monitor);
+
+    mediaRecorder.onstop = async () => {
+      if (!listening) return;
+      if (chunks.length === 0 || !hasSpeech) {
+        loopId = setTimeout(scheduleRecordCycle, 100);
+        return;
+      }
+      const blob = new Blob(chunks, { type: mimeType });
+      await transcribeAndHandle(blob);
+    };
+  }
+
+  async function transcribeAndHandle(blob) {
+    setStatus('识别中…');
+    try {
+      const form = new FormData();
+      form.append('file', blob, 'audio.webm');
+      const res = await fetch(`${WORKER_URL}/transcribe`, { method: 'POST', body: form });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      const text = (data.text || '').trim();
+      setStatus(`识别到：${text || '（空）'}`);
+      if (text && triggerWords.some(w => text.includes(w))) {
+        triggerRoll();
+      }
+    } catch (err) {
+      setStatus('识别失败，请重试');
+      console.error(err);
+    }
+    if (listening) {
+      loopId = setTimeout(scheduleRecordCycle, 300);
+    }
+  }
+
+  function setStatus(msg) {
+    statusEl.textContent = msg;
+  }
+</script>
+</body>
+</html>

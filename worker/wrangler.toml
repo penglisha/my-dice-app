@@ -1,0 +1,6 @@
+name = "dice-app-worker"
+main = "src/index.ts"
+compatibility_date = "2025-04-21"
+
+# GROQ_API_KEY 通过命令设置（不写在此文件中）：
+# wrangler secret put GROQ_API_KEY
