@@ -311,13 +311,14 @@
     setTimeout(() => speak(ttsTexts[n]), 1250);
   }
 
-  // ── 录音 & 语音识别 ──
+  // ── 录音 & 语音识别（PCM → WAV，避免 WebM 格式兼容问题）──
   let listening = false;
   let mediaStream = null;
-  let mediaRecorder = null;
   let audioCtx = null;
   let analyser = null;
-  let chunks = [];
+  let scriptProcessor = null;
+  let isCapturing = false;
+  let capturedChunks = [];
   let loopId = null;
 
   toggleBtn.addEventListener('click', () => {
@@ -336,16 +337,16 @@
     listening = true;
     toggleBtn.textContent = '⏹️ 停止监听';
     toggleBtn.classList.add('active');
-    setupAudioAnalyser();
+    setupAudio();
     scheduleRecordCycle();
   }
 
   function stopListening() {
     listening = false;
+    isCapturing = false;
+    capturedChunks = [];
     clearTimeout(loopId);
-    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-      mediaRecorder.stop();
-    }
+    if (scriptProcessor) { scriptProcessor.disconnect(); scriptProcessor = null; }
     if (audioCtx) { audioCtx.close(); audioCtx = null; }
     if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
     toggleBtn.textContent = '🎙️ 开始监听';
@@ -353,12 +354,24 @@
     setStatus('已停止');
   }
 
-  function setupAudioAnalyser() {
-    audioCtx = new AudioContext();
+  function setupAudio() {
+    // 16kHz 是语音识别的最佳采样率，文件更小
+    audioCtx = new AudioContext({ sampleRate: 16000 });
     analyser = audioCtx.createAnalyser();
     analyser.fftSize = 512;
+
     const src = audioCtx.createMediaStreamSource(mediaStream);
     src.connect(analyser);
+
+    // ScriptProcessor 捕获 PCM 原始样本
+    scriptProcessor = audioCtx.createScriptProcessor(4096, 1, 1);
+    src.connect(scriptProcessor);
+    scriptProcessor.connect(audioCtx.destination);
+    scriptProcessor.onaudioprocess = e => {
+      if (isCapturing) {
+        capturedChunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+      }
+    };
   }
 
   function getRMS() {
@@ -369,33 +382,43 @@
     return Math.sqrt(sum / buf.length);
   }
 
+  // Float32 PCM → 标准 WAV Blob
+  function encodeWAV(chunks, sampleRate) {
+    const totalLen = chunks.reduce((s, a) => s + a.length, 0);
+    const buf = new ArrayBuffer(44 + totalLen * 2);
+    const view = new DataView(buf);
+    const ws = (off, s) => [...s].forEach((c, i) => view.setUint8(off + i, c.charCodeAt(0)));
+    ws(0, 'RIFF'); view.setUint32(4, 36 + totalLen * 2, true);
+    ws(8, 'WAVE'); ws(12, 'fmt ');
+    view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 1, true);
+    view.setUint32(24, sampleRate, true); view.setUint32(28, sampleRate * 2, true);
+    view.setUint16(32, 2, true); view.setUint16(34, 16, true);
+    ws(36, 'data'); view.setUint32(40, totalLen * 2, true);
+    let off = 44;
+    for (const arr of chunks) {
+      for (const s of arr) {
+        const v = Math.max(-1, Math.min(1, s));
+        view.setInt16(off, v < 0 ? v * 0x8000 : v * 0x7FFF, true);
+        off += 2;
+      }
+    }
+    return new Blob([buf], { type: 'audio/wav' });
+  }
+
   function scheduleRecordCycle() {
     if (!listening) return;
     setStatus('监听中…');
-    chunks = [];
+    capturedChunks = [];
+    isCapturing = true;
     let hasSpeech = false;
     let silenceStart = null;
-
-    const mimeType = [
-      'audio/webm;codecs=opus',
-      'audio/webm',
-      'audio/ogg;codecs=opus',
-      'audio/ogg',
-      'audio/mp4',
-    ].find(t => MediaRecorder.isTypeSupported(t)) || '';
-    mediaRecorder = new MediaRecorder(mediaStream, mimeType ? { mimeType } : {});
-    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
-
-    mediaRecorder.start(100); // 100ms chunks
-
+    const startTime = Date.now();
     const SILENCE_THRESHOLD = 0.01;
     const SILENCE_DURATION = 1200;
     const NO_SPEECH_TIMEOUT = 3000;
 
-    const startTime = Date.now();
-
     function monitor() {
-      if (!listening || mediaRecorder.state === 'inactive') return;
+      if (!listening) return;
       const rms = getRMS();
       const now = Date.now();
 
@@ -406,46 +429,29 @@
         if (!silenceStart) silenceStart = now;
         else if (now - silenceStart >= SILENCE_DURATION) {
           // 说话后静音 1.2s → 停止并识别
-          mediaRecorder.stop();
+          isCapturing = false;
+          const wav = encodeWAV(capturedChunks, audioCtx.sampleRate);
+          capturedChunks = [];
+          transcribeAndHandle(wav);
           return;
         }
-      } else {
-        // 3s 内没检测到语音 → 重新开始
-        if (now - startTime >= NO_SPEECH_TIMEOUT) {
-          mediaRecorder.stop();
-          chunks = []; // 丢弃
-          loopId = setTimeout(scheduleRecordCycle, 100);
-          return;
-        }
+      } else if (now - startTime >= NO_SPEECH_TIMEOUT) {
+        // 3s 内无语音 → 丢弃，重新开始
+        isCapturing = false;
+        capturedChunks = [];
+        loopId = setTimeout(scheduleRecordCycle, 100);
+        return;
       }
       requestAnimationFrame(monitor);
     }
 
-    mediaRecorder.onstart = () => requestAnimationFrame(monitor);
-
-    mediaRecorder.onstop = async () => {
-      if (!listening) return;
-      if (chunks.length === 0 || !hasSpeech) {
-        loopId = setTimeout(scheduleRecordCycle, 100);
-        return;
-      }
-      const blob = new Blob(chunks, { type: mimeType });
-      await transcribeAndHandle(blob);
-    };
+    requestAnimationFrame(monitor);
   }
 
-  const MIME_TO_EXT = {
-    'audio/webm': 'webm',
-    'audio/ogg':  'ogg',
-    'audio/mp4':  'mp4',
-  };
-
-  async function transcribeAndHandle(blob) {
+  async function transcribeAndHandle(wavBlob) {
     setStatus('识别中…');
     try {
-      const baseMime = blob.type.split(';')[0];
-      const ext = MIME_TO_EXT[baseMime] || 'webm';
-      const audioFile = new File([blob], `recording.${ext}`, { type: blob.type });
+      const audioFile = new File([wavBlob], 'recording.wav', { type: 'audio/wav' });
       const form = new FormData();
       form.append('file', audioFile);
       form.append('model', 'whisper-large-v3-turbo');
@@ -453,7 +459,10 @@
       form.append('response_format', 'json');
       const res = await fetch(`${WORKER_URL}/transcribe`, { method: 'POST', body: form });
       const data = await res.json();
-      if (data.error) throw new Error(data.error);
+      if (data.error) {
+        const msg = typeof data.error === 'object' ? data.error.message : data.error;
+        throw new Error(msg);
+      }
       const text = (data.text || '').trim();
       setStatus(`识别到：${text || '（空）'}`);
       if (text && triggerWords.some(w => text.includes(w))) {

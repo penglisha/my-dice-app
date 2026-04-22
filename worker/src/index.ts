@@ -28,6 +28,10 @@ export default {
         );
 
         const result = await groqResponse.json();
+        // 把 Groq 的原始状态码和错误一起返回，方便排查
+        if (!groqResponse.ok) {
+          console.error('Groq error', groqResponse.status, JSON.stringify(result));
+        }
         return new Response(JSON.stringify(result), {
           status: groqResponse.status,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
