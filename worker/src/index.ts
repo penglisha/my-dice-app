@@ -26,21 +26,16 @@ export default {
 
 async function handleTranscribe(request: Request, env: Env): Promise<Response> {
   try {
-    // 直接读取原始二进制，绕过 formData() 解析 WebM 时可能损坏数据的问题
-    const audioBuffer = await request.arrayBuffer();
+    const incoming = await request.formData();
+    const audioFile = incoming.get('file');
 
-    if (audioBuffer.byteLength === 0) {
-      return jsonResponse({ error: 'Audio file is empty' }, 400);
+    if (!audioFile || !(audioFile instanceof File)) {
+      return jsonResponse({ error: 'Missing audio file' }, 400);
     }
 
-    // Content-Type 由前端设置（如 audio/webm），裁掉 codec 参数
-    const rawMime = request.headers.get('Content-Type') || 'audio/webm';
-    const baseMime = rawMime.split(';')[0].trim();
-
-    const fileBlob = new Blob([audioBuffer], { type: baseMime });
-
+    // 重新组装发给 Groq 的 FormData，不手动设 Content-Type（让 fetch 自动带 boundary）
     const groqForm = new FormData();
-    groqForm.append('file', fileBlob, 'audio.webm');
+    groqForm.append('file', audioFile, audioFile.name);
     groqForm.append('model', 'whisper-large-v3-turbo');
     groqForm.append('language', 'zh');
     groqForm.append('response_format', 'json');
@@ -49,6 +44,7 @@ async function handleTranscribe(request: Request, env: Env): Promise<Response> {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${env.GROQ_API_KEY}`,
+        // 不设 Content-Type，让 fetch 自动填写带 boundary 的 multipart/form-data
       },
       body: groqForm,
     });
