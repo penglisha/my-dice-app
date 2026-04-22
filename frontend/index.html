@@ -448,6 +448,9 @@
       const audioFile = new File([blob], `recording.${ext}`, { type: blob.type });
       const form = new FormData();
       form.append('file', audioFile);
+      form.append('model', 'whisper-large-v3-turbo');
+      form.append('language', 'zh');
+      form.append('response_format', 'json');
       const res = await fetch(`${WORKER_URL}/transcribe`, { method: 'POST', body: form });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
