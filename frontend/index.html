@@ -448,16 +448,15 @@
       const audioFile = new File([wavBlob], 'recording.wav', { type: 'audio/wav' });
       const form = new FormData();
       form.append('file', audioFile);
-      form.append('model', 'whisper-large-v3-turbo');
-      form.append('language', 'zh');
-      form.append('response_format', 'json');
       const res = await fetch(`${WORKER_URL}/transcribe`, { method: 'POST', body: form });
       const data = await res.json();
       if (data.error) {
         const msg = typeof data.error === 'object' ? data.error.message : data.error;
         throw new Error(msg);
       }
-      const text = (data.text || '').trim();
+      // 兼容 SenseVoice 返回格式：{ text } 或 [{ text }] 或 { result }
+      const raw = Array.isArray(data) ? data[0] : data;
+      const text = (raw.text || raw.result || '').trim();
       setStatus(`识别到：${text || '（空）'}`);
       if (text && triggerWords.some(w => text.includes(w))) {
         triggerRoll();
