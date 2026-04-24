@@ -448,15 +448,14 @@
       const audioFile = new File([wavBlob], 'recording.wav', { type: 'audio/wav' });
       const form = new FormData();
       form.append('file', audioFile);
+      form.append('lang', 'zh');
       const res = await fetch(`${WORKER_URL}/transcribe`, { method: 'POST', body: form });
       const data = await res.json();
       if (data.error) {
         const msg = typeof data.error === 'object' ? data.error.message : data.error;
         throw new Error(msg);
       }
-      // 兼容 SenseVoice 返回格式：{ text } 或 [{ text }] 或 { result }
-      const raw = Array.isArray(data) ? data[0] : data;
-      const text = (raw.text || raw.result || '').trim();
+      const text = (data.text || '').trim();
       setStatus(`识别到：${text || '（空）'}`);
       if (text && triggerWords.some(w => text.includes(w))) {
         triggerRoll();

@@ -1,10 +1,8 @@
-const ASR_URL = 'https://penglisha-sensevoice-api.hf.space/api/v1/asr';
-
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const corsHeaders = {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS, GET',
       'Access-Control-Allow-Headers': 'Content-Type',
     };
 
@@ -12,38 +10,54 @@ export default {
       return new Response(null, { headers: corsHeaders });
     }
 
-    if (request.method === 'POST' && new URL(request.url).pathname === '/transcribe') {
+    const url = new URL(request.url);
+
+    if (request.method === 'POST' && url.pathname === '/transcribe') {
       try {
         const contentType = request.headers.get('Content-Type') || '';
 
-        const asrResponse = await fetch(ASR_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': contentType,  // 原样透传，保留 boundary
-          },
-          body: request.body,             // 原样透传
-        });
+        const hfResponse = await fetch(
+          `${env.HF_SPACE_URL}/api/v1/asr`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': contentType,  // 原样透传，保留 multipart boundary
+            },
+            body: request.body,             // 原样透传，不解析不重建
+          }
+        );
 
-        const result = await asrResponse.json();
-        if (!asrResponse.ok) {
-          console.error('ASR error', asrResponse.status, JSON.stringify(result));
+        const result = await hfResponse.json() as { text?: string; error?: string };
+
+        if (!hfResponse.ok) {
+          return new Response(
+            JSON.stringify({ error: result.error || 'HF Space 返回错误' }),
+            { status: hfResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
-        return new Response(JSON.stringify(result), {
-          status: asrResponse.status,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+
+        return new Response(
+          JSON.stringify({ text: result.text || '' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
 
       } catch (err) {
-        return new Response(JSON.stringify({ error: String(err) }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        return new Response(
+          JSON.stringify({ error: String(err) }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
     }
 
     return new Response('Not Found', { status: 404 });
-  }
+  },
+
+  // 每20分钟 ping HF Space，防止免费版休眠
+  async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
+    await fetch(`${env.HF_SPACE_URL}/`).catch(() => {});
+  },
 };
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface Env {}
+interface Env {
+  HF_SPACE_URL: string;
+}

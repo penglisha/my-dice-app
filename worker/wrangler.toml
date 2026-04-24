@@ -1,6 +1,10 @@
 name = "dice-app-worker"
 main = "src/index.ts"
-compatibility_date = "2025-04-21"
+compatibility_date = "2026-04-24"
 
-# GROQ_API_KEY 通过命令设置（不写在此文件中）：
-# wrangler secret put GROQ_API_KEY
+[triggers]
+crons = ["*/20 * * * *"]
+
+# HF_SPACE_URL 通过命令设置（不写在此文件中）：
+# wrangler secret put HF_SPACE_URL
+# 值为：https://你的用户名-sensevoice-api.hf.space
