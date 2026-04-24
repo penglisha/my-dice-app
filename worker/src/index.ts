@@ -14,33 +14,35 @@ export default {
 
     if (request.method === 'POST' && url.pathname === '/transcribe') {
       try {
+        // 先把 body 完整读取为 ArrayBuffer，再转发
+        const bodyBuffer = await request.arrayBuffer();
         const contentType = request.headers.get('Content-Type') || '';
-
+    
         const hfResponse = await fetch(
           `${env.HF_SPACE_URL}/api/v1/asr`,
           {
             method: 'POST',
             headers: {
-              'Content-Type': contentType,  // 原样透传，保留 multipart boundary
+              'Content-Type': contentType,
             },
-            body: request.body,             // 原样透传，不解析不重建
+            body: bodyBuffer,  // 用 ArrayBuffer 而不是 request.body
           }
         );
-
+    
         const result = await hfResponse.json() as { text?: string; error?: string };
-
+    
         if (!hfResponse.ok) {
           return new Response(
             JSON.stringify({ error: result.error || 'HF Space 返回错误' }),
             { status: hfResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
-
+    
         return new Response(
           JSON.stringify({ text: result.text || '' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
-
+    
       } catch (err) {
         return new Response(
           JSON.stringify({ error: String(err) }),
