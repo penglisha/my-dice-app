@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Ludo Buddy - 陪玩飞行棋语音机器人</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&amp;family=Quicksand:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary": "#ffffff",
+                    "on-secondary-fixed": "#241a00",
+                    "surface-bright": "#f6fafe",
+                    "on-secondary-fixed-variant": "#574500",
+                    "on-error": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-tertiary-container": "#d7fff9",
+                    "secondary-fixed-dim": "#ebc23e",
+                    "primary": "#4352a5",
+                    "on-surface-variant": "#454651",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary-container": "#f8f6ff",
+                    "outline-variant": "#c6c5d3",
+                    "on-background": "#171c1f",
+                    "outline": "#767683",
+                    "secondary-container": "#fdd34d",
+                    "primary-container": "#5c6bc0",
+                    "secondary": "#735c00",
+                    "surface-container-high": "#e4e9ed",
+                    "surface-variant": "#dfe3e7",
+                    "surface-container-low": "#f0f4f8",
+                    "surface-tint": "#4858ab",
+                    "background": "#f6fafe",
+                    "on-primary-fixed": "#00105b",
+                    "surface-container-highest": "#dfe3e7",
+                    "surface-container": "#eaeef2",
+                    "on-secondary": "#ffffff",
+                    "inverse-surface": "#2c3134",
+                    "on-surface": "#171c1f",
+                    "on-error-container": "#93000a",
+                    "primary-fixed-dim": "#bac3ff",
+                    "tertiary-fixed-dim": "#71d7cd",
+                    "surface": "#f6fafe",
+                    "on-tertiary-fixed-variant": "#00504a",
+                    "error": "#ba1a1a",
+                    "tertiary-fixed": "#8ef4e9",
+                    "on-tertiary": "#ffffff",
+                    "tertiary": "#00645d",
+                    "surface-dim": "#d6dade",
+                    "secondary-fixed": "#ffe087",
+                    "inverse-primary": "#bac3ff",
+                    "on-primary-fixed-variant": "#2f3f92",
+                    "on-tertiary-fixed": "#00201d",
+                    "primary-fixed": "#dee0ff",
+                    "on-secondary-container": "#725b00",
+                    "inverse-on-surface": "#edf1f5",
+                    "tertiary-container": "#007f77"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-desktop": "48px",
+                    "md": "24px",
+                    "xl": "64px",
+                    "xs": "4px",
+                    "margin-mobile": "16px",
+                    "lg": "40px",
+                    "gutter": "20px",
+                    "base": "8px",
+                    "sm": "12px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Plus Jakarta Sans"],
+                    "label-bold": ["Quicksand"],
+                    "body-md": ["Quicksand"],
+                    "headline-lg": ["Plus Jakarta Sans"],
+                    "headline-lg-mobile": ["Plus Jakarta Sans"],
+                    "body-lg": ["Quicksand"]
+            },
+            "fontSize": {
+                    "headline-md": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                    "label-bold": ["14px", {"lineHeight": "16px", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "500"}],
+                    "headline-lg": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "headline-lg-mobile": ["32px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "body-lg": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .dice-3d {
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            filter: drop-shadow(0 10px 15px rgba(67, 82, 165, 0.2));
+        }
+        .dice-3d:active {
+            transform: scale(0.9) rotate(15deg);
+        }
+        .bubbly-button {
+            box-shadow: 0 6px 0px #c69c00; /* Custom darker yellow for faux 3D */
+            transition: all 0.1s ease;
+        }
+        .bubbly-button:active {
+            box-shadow: 0 0px 0px #c69c00;
+            transform: translateY(4px);
+        }
+        .floating-accent {
+            animation: float 4s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+        .bg-mesh {
+            background: radial-gradient(at 0% 0%, #dee0ff 0%, transparent 50%),
+                        radial-gradient(at 100% 100%, #fdd34d33 0%, transparent 50%);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container bg-mesh">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-mobile py-base bg-surface shadow-[0px_8px_24px_rgba(67,82,165,0.1)] md:px-xl">
+<div class="flex items-center gap-base">
+<span class="material-symbols-outlined text-primary text-headline-md" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+<h1 class="font-headline-md text-headline-md font-extrabold text-primary">Ludo Buddy</h1>
+</div>
+</header>
+<main class="pt-24 px-margin-mobile flex flex-col gap-lg bg-mesh relative pb-lg md:px-xl md:items-center md:max-w-screen-xl md:mx-auto">
+<!-- Floating Stickers -->
+<div class="absolute top-32 left-4 opacity-30 floating-accent pointer-events-none">
+<span class="material-symbols-outlined text-primary text-xl">star</span>
+</div>
+<div class="absolute top-48 right-8 opacity-30 floating-accent pointer-events-none" style="animation-delay: 1s;">
+<span class="material-symbols-outlined text-secondary text-xl">rocket_launch</span>
+</div>
+<!-- Intro Section -->
+<section class="text-center animate-in fade-in slide-in-from-top-4 duration-700">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-primary mb-xs md:text-headline-lg">🎲 陪玩飞行棋语音机器人</h2>
+<p class="text-on-surface-variant font-body-lg">小朋友的棋类游戏好玩伴</p>
+</section>
+<!-- Dice Action Area -->
+<section class="flex flex-col items-center justify-center py-lg relative">
+<div class="w-48 h-48 bg-white/40 backdrop-blur-md rounded-xl flex items-center justify-center dice-3d border-4 border-white/60">
+<!-- Main Dice Graphic -->
+<div class="relative w-32 h-32 bg-white rounded-lg shadow-xl flex items-center justify-center">
+<div class="grid grid-cols-3 grid-rows-3 gap-2 w-24 h-24 p-2">
+<div class="bg-primary rounded-full w-4 h-4"></div>
+<div></div>
+<div class="bg-primary rounded-full w-4 h-4"></div>
+<div></div>
+<div class="bg-primary rounded-full w-4 h-4"></div>
+<div></div>
+<div class="bg-primary rounded-full w-4 h-4"></div>
+<div></div>
+<div class="bg-primary rounded-full w-4 h-4"></div>
+</div>
+<!-- Faux 3D Edge -->
+<div class="absolute -bottom-2 w-full h-2 bg-slate-200 rounded-b-lg"></div>
+</div>
+</div>
+<div class="mt-base text-center text-on-surface-variant font-label-bold flex items-center gap-xs">
+<span class="material-symbols-outlined text-secondary">tips_and_updates</span>
+                点击骰子让机器人准备
+            </div>
+</section>
+<!-- Action Button -->
+<section class="flex justify-center">
+<button class="bubbly-button bg-secondary-container text-on-secondary-container h-[72px] px-xl rounded-full flex items-center gap-base font-headline-md text-headline-md active:translate-y-1" id="micBtn">
+<span class="material-symbols-outlined text-3xl">mic</span>
+                🎙️ 开始监听
+            </button>
+</section>
+<!-- Instructions Card -->
+<section class="bg-surface-container-lowest rounded-lg p-md shadow-[0px_8px_24px_rgba(67,82,165,0.08)] border-2 border-primary-container/10 md:max-w-2xl md:w-full">
+<h3 class="font-headline-md text-primary mb-sm flex items-center gap-sm">
+<span class="bg-primary-container/20 p-2 rounded-full flex items-center">
+<span class="material-symbols-outlined text-primary">auto_fix_high</span>
+</span>
+                玩法说明
+            </h3>
+<p class="text-on-surface-variant mb-md leading-relaxed">
+                替代大人陪娃下飞行棋——机器人负责扔骰子，娃帮机器人走棋。
+            </p>
+<div class="space-y-sm">
+<div class="flex gap-base items-start group">
+<span class="bg-tertiary-container text-on-tertiary-container w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-bold">1</span>
+<p class="pt-1 text-on-surface">点击「开始监听」，让机器人进入待命状态</p>
+</div>
+<div class="flex gap-base items-start group">
+<span class="bg-primary-container text-on-primary-container w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-bold">2</span>
+<p class="pt-1 text-on-surface">轮到机器人走棋时，说 <span class="text-primary font-bold">「机器人，轮到你了」</span></p>
+</div>
+<div class="flex gap-base items-start group">
+<span class="bg-secondary-container text-on-secondary-container w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-bold">3</span>
+<p class="pt-1 text-on-surface">机器人自动扔骰子并语音播报点数，娃帮它在棋盘上走对应步数 🎉</p>
+</div>
+</div>
+</section>
+<!-- Permission Hint -->
+<section class="bg-error-container/40 rounded-lg p-sm flex gap-sm border border-error-container md:max-w-2xl md:w-full">
+<span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">warning</span>
+<p class="text-on-error-container text-label-bold">
+                🎤 需要麦克风权限才能使用语音功能。请在浏览器地址栏点击权限图标，允许访问麦克风后刷新页面。
+            </p>
+</section>
+</main>
+<!-- BottomNavBar -->
+<!-- Micro-interactions Script -->
+<script>
+        const micBtn = document.getElementById('micBtn');
+        let isListening = false;
+
+        micBtn.addEventListener('click', () => {
+            isListening = !isListening;
+            if (isListening) {
+                micBtn.innerHTML = `
+                    <span class="material-symbols-outlined text-3xl animate-pulse">mic</span>
+                    正在监听...
+                `;
+                micBtn.classList.remove('bg-secondary-container', 'text-on-secondary-container');
+                micBtn.classList.add('bg-primary-container', 'text-on-primary-container');
+            } else {
+                micBtn.innerHTML = `
+                    <span class="material-symbols-outlined text-3xl">mic</span>
+                    🎙️ 开始监听
+                `;
+                micBtn.classList.remove('bg-primary-container', 'text-on-primary-container');
+                micBtn.classList.add('bg-secondary-container', 'text-on-secondary-container');
+            }
+        });
+
+        // Add random floating objects in background for atmosphere
+        function createStar() {
+            const star = document.createElement('span');
+            star.className = 'material-symbols-outlined absolute pointer-events-none opacity-20';
+            star.style.left = Math.random() * 100 + 'vw';
+            star.style.top = Math.random() * 100 + 'vh';
+            star.style.fontSize = (Math.random() * 20 + 10) + 'px';
+            star.style.color = '#4352a5';
+            star.innerText = 'star';
+            star.style.animation = `float ${Math.random() * 3 + 3}s ease-in-out infinite`;
+            star.style.animationDelay = Math.random() * 2 + 's';
+            document.body.appendChild(star);
+        }
+
+        for (let i = 0; i < 8; i++) {
+            createStar();
+        }
+    </script><span class="material-symbols-outlined absolute pointer-events-none opacity-20" style="left: 23.7057vw; top: 53.5602vh; font-size: 20.4238px; color: rgb(67, 82, 165); animation: 4.73515s ease-in-out 0.53274s infinite normal none running float;">star</span><span class="material-symbols-outlined absolute pointer-events-none opacity-20" style="left: 30.19vw; top: 37.7453vh; font-size: 12.5407px; color: rgb(67, 82, 165); animation: 3.60201s ease-in-out 1.05645s infinite normal none running float;">star</span><span class="material-symbols-outlined absolute pointer-events-none opacity-20" style="left: 42.5277vw; top: 32.9406vh; font-size: 28.7334px; color: rgb(67, 82, 165); animation: 3.65673s ease-in-out 1.39084s infinite normal none running float;">star</span><span class="material-symbols-outlined absolute pointer-events-none opacity-20" style="left: 53.2361vw; top: 99.8433vh; font-size: 29.6583px; color: rgb(67, 82, 165); animation: 4.18204s ease-in-out 0.791372s infinite normal none running float;">star</span><span class="material-symbols-outlined absolute pointer-events-none opacity-20" style="left: 67.5009vw; top: 18.687vh; font-size: 27.827px; color: rgb(67, 82, 165); animation: 3.42507s ease-in-out 1.82867s infinite normal none running float;">star</span><span class="material-symbols-outlined absolute pointer-events-none opacity-20" style="left: 16.6333vw; top: 69.2546vh; font-size: 22.7884px; color: rgb(67, 82, 165); animation: 4.66407s ease-in-out 1.52415s infinite normal none running float;">star</span><span class="material-symbols-outlined absolute pointer-events-none opacity-20" style="left: 11.8082vw; top: 85.6598vh; font-size: 15.0701px; color: rgb(67, 82, 165); animation: 3.45597s ease-in-out 0.223284s infinite normal none running float;">star</span><span class="material-symbols-outlined absolute pointer-events-none opacity-20" style="left: 20.174vw; top: 64.8547vh; font-size: 29.7975px; color: rgb(67, 82, 165); animation: 5.00173s ease-in-out 1.3394s infinite normal none running float;">star</span>
+</body></html>

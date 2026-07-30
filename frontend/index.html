@@ -1,282 +1,306 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🎲 陪玩飞行棋语音机器人</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Ludo Buddy - 陪玩飞行棋语音机器人</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "on-primary": "#ffffff",
+          "on-secondary-fixed": "#241a00",
+          "surface-bright": "#f6fafe",
+          "on-secondary-fixed-variant": "#574500",
+          "on-error": "#ffffff",
+          "error-container": "#ffdad6",
+          "on-tertiary-container": "#d7fff9",
+          "secondary-fixed-dim": "#ebc23e",
+          "primary": "#4352a5",
+          "on-surface-variant": "#454651",
+          "surface-container-lowest": "#ffffff",
+          "on-primary-container": "#f8f6ff",
+          "outline-variant": "#c6c5d3",
+          "on-background": "#171c1f",
+          "outline": "#767683",
+          "secondary-container": "#fdd34d",
+          "primary-container": "#5c6bc0",
+          "secondary": "#735c00",
+          "surface-container-high": "#e4e9ed",
+          "surface-variant": "#dfe3e7",
+          "surface-container-low": "#f0f4f8",
+          "surface-tint": "#4858ab",
+          "background": "#f6fafe",
+          "on-primary-fixed": "#00105b",
+          "surface-container-highest": "#dfe3e7",
+          "surface-container": "#eaeef2",
+          "on-secondary": "#ffffff",
+          "inverse-surface": "#2c3134",
+          "on-surface": "#171c1f",
+          "on-error-container": "#93000a",
+          "primary-fixed-dim": "#bac3ff",
+          "tertiary-fixed-dim": "#71d7cd",
+          "surface": "#f6fafe",
+          "on-tertiary-fixed-variant": "#00504a",
+          "error": "#ba1a1a",
+          "tertiary-fixed": "#8ef4e9",
+          "on-tertiary": "#ffffff",
+          "tertiary": "#00645d",
+          "surface-dim": "#d6dade",
+          "secondary-fixed": "#ffe087",
+          "inverse-primary": "#bac3ff",
+          "on-primary-fixed-variant": "#2f3f92",
+          "on-tertiary-fixed": "#00201d",
+          "primary-fixed": "#dee0ff",
+          "on-secondary-container": "#725b00",
+          "inverse-on-surface": "#edf1f5",
+          "tertiary-container": "#007f77"
+        },
+        borderRadius: {
+          DEFAULT: "1rem",
+          lg: "2rem",
+          xl: "3rem",
+          full: "9999px"
+        },
+        spacing: {
+          "margin-desktop": "48px",
+          md: "24px",
+          xl: "64px",
+          xs: "4px",
+          "margin-mobile": "16px",
+          lg: "40px",
+          gutter: "20px",
+          base: "8px",
+          sm: "12px"
+        },
+        fontFamily: {
+          "headline-md": ["Plus Jakarta Sans"],
+          "label-bold": ["Quicksand"],
+          "body-md": ["Quicksand"],
+          "headline-lg": ["Plus Jakarta Sans"],
+          "headline-lg-mobile": ["Plus Jakarta Sans"],
+          "body-lg": ["Quicksand"]
+        },
+        fontSize: {
+          "headline-md": ["28px", { lineHeight: "34px", fontWeight: "700" }],
+          "label-bold": ["14px", { lineHeight: "16px", fontWeight: "700" }],
+          "body-md": ["16px", { lineHeight: "24px", fontWeight: "500" }],
+          "headline-lg": ["40px", { lineHeight: "48px", letterSpacing: "-0.02em", fontWeight: "800" }],
+          "headline-lg-mobile": ["32px", { lineHeight: "38px", letterSpacing: "-0.02em", fontWeight: "800" }],
+          "body-lg": ["20px", { lineHeight: "28px", fontWeight: "600" }]
+        }
+      }
+    }
+  };
+</script>
+<style>
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+  .bubbly-button {
+    box-shadow: 0 6px 0px #c69c00;
+    transition: all 0.1s ease;
+  }
+  .bubbly-button:active {
+    box-shadow: 0 0px 0px #c69c00;
+    transform: translateY(4px);
+  }
+  .bubbly-button.is-listening {
+    box-shadow: 0 6px 0px #2f3f92;
+  }
+  .bubbly-button.is-listening:active {
+    box-shadow: 0 0px 0px #2f3f92;
+  }
+  .floating-accent {
+    animation: float 4s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(5deg); }
+  }
+  .bg-mesh {
+    background: radial-gradient(at 0% 0%, #dee0ff 0%, transparent 50%),
+                radial-gradient(at 100% 100%, #fdd34d33 0%, transparent 50%);
+  }
+  #resultText.show { opacity: 1; }
+  #resultText { transition: opacity .4s ease; }
 
-    body {
-      min-height: 100vh;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      font-family: 'Rounded Mplus 1c', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 28px;
-      padding: 24px 16px;
-      color: #fff;
-    }
-
-    h1 {
-      font-size: clamp(1.6rem, 5vw, 2.4rem);
-      text-shadow: 0 2px 8px rgba(0,0,0,.3);
-      letter-spacing: 2px;
-    }
-
-    /* ── 3D Dice ── */
-    .scene {
-      width: 160px;
-      height: 160px;
-      perspective: 600px;
-    }
-
-    .cube {
-      width: 160px;
-      height: 160px;
-      position: relative;
-      transform-style: preserve-3d;
-      transform: rotateX(0deg) rotateY(0deg);
-      transition: transform 1.2s ease-out;
-    }
-
-    .face {
-      position: absolute;
-      width: 160px;
-      height: 160px;
-      background: #fff;
-      border-radius: 16px;
-      border: 3px solid #ddd;
-      box-shadow: inset 0 0 12px rgba(0,0,0,.08);
-      display: grid;
-      padding: 18px;
-    }
-
-    .face.front  { transform: translateZ(80px); }
-    .face.back   { transform: rotateY(180deg)  translateZ(80px); }
-    .face.left   { transform: rotateY(-90deg)  translateZ(80px); }
-    .face.right  { transform: rotateY(90deg)   translateZ(80px); }
-    .face.top    { transform: rotateX(90deg)   translateZ(80px); }
-    .face.bottom { transform: rotateX(-90deg)  translateZ(80px); }
-
-    .dot {
-      width: 22px;
-      height: 22px;
-      background: #222;
-      border-radius: 50%;
-    }
-
-    /* face-1 */
-    .face-1 { place-items: center; }
-    /* face-2 */
-    .face-2 {
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
-    }
-    .face-2 .dot:nth-child(1) { grid-column:1; grid-row:1; align-self:start; justify-self:start; }
-    .face-2 .dot:nth-child(2) { grid-column:2; grid-row:2; align-self:end;   justify-self:end;   }
-    /* face-3 */
-    .face-3 {
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr 1fr;
-    }
-    .face-3 .dot:nth-child(1) { grid-column:1; grid-row:1; align-self:start; justify-self:start; }
-    .face-3 .dot:nth-child(2) { grid-column:2; grid-row:2; place-self:center; }
-    .face-3 .dot:nth-child(3) { grid-column:2; grid-row:3; align-self:end;   justify-self:end;   }
-    /* face-4 */
-    .face-4 {
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
-    }
-    .face-4 .dot { }
-    .face-4 .dot:nth-child(1) { align-self:start; justify-self:start; }
-    .face-4 .dot:nth-child(2) { align-self:start; justify-self:end;   }
-    .face-4 .dot:nth-child(3) { align-self:end;   justify-self:start; }
-    .face-4 .dot:nth-child(4) { align-self:end;   justify-self:end;   }
-    /* face-5 */
-    .face-5 {
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr 1fr;
-    }
-    .face-5 .dot:nth-child(1) { grid-column:1;   grid-row:1; align-self:start; justify-self:start; }
-    .face-5 .dot:nth-child(2) { grid-column:2;   grid-row:1; align-self:start; justify-self:end;   }
-    .face-5 .dot:nth-child(3) { grid-column:1/3; grid-row:2; place-self:center;                    }
-    .face-5 .dot:nth-child(4) { grid-column:1;   grid-row:3; align-self:end;   justify-self:start; }
-    .face-5 .dot:nth-child(5) { grid-column:2;   grid-row:3; align-self:end;   justify-self:end;   }
-    /* face-6 */
-    .face-6 {
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr 1fr;
-    }
-    .face-6 .dot:nth-child(1) { grid-column:1; grid-row:1; align-self:start; justify-self:start; }
-    .face-6 .dot:nth-child(2) { grid-column:2; grid-row:1; align-self:start; justify-self:end;   }
-    .face-6 .dot:nth-child(3) { grid-column:1; grid-row:2; place-self:center start; }
-    .face-6 .dot:nth-child(4) { grid-column:2; grid-row:2; place-self:center end; }
-    .face-6 .dot:nth-child(5) { grid-column:1; grid-row:3; align-self:end; justify-self:start; }
-    .face-6 .dot:nth-child(6) { grid-column:2; grid-row:3; align-self:end; justify-self:end;   }
-
-    /* ── Result text ── */
-    #result {
-      font-size: clamp(1.4rem, 5vw, 2rem);
-      font-weight: 700;
-      text-shadow: 0 2px 6px rgba(0,0,0,.25);
-      min-height: 2.4rem;
-      opacity: 0;
-      transition: opacity .5s ease;
-    }
-    #result.show { opacity: 1; }
-
-    /* ── Controls ── */
-    .controls {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 14px;
-      width: 100%;
-      max-width: 320px;
-    }
-
-    #toggleBtn {
-      width: 100%;
-      padding: 14px 0;
-      font-size: 1.1rem;
-      font-weight: 700;
-      border: none;
-      border-radius: 50px;
-      cursor: pointer;
-      background: linear-gradient(90deg, #f7971e, #ffd200);
-      color: #333;
-      box-shadow: 0 4px 14px rgba(0,0,0,.25);
-      transition: transform .1s, box-shadow .1s;
-      letter-spacing: 1px;
-    }
-    #toggleBtn:active { transform: scale(.97); box-shadow: 0 2px 8px rgba(0,0,0,.2); }
-    #toggleBtn.active {
-      background: linear-gradient(90deg, #ee0979, #ff6a00);
-      color: #fff;
-    }
-
-    #status {
-      font-size: .95rem;
-      opacity: .85;
-      text-align: center;
-      min-height: 1.3rem;
-    }
-
-    /* ── How-to card ── */
-    .howto {
-      background: rgba(255,255,255,.15);
-      backdrop-filter: blur(6px);
-      border-radius: 18px;
-      padding: 16px 22px;
-      max-width: 340px;
-      width: 100%;
-      font-size: .95rem;
-      line-height: 1.7;
-      text-align: left;
-    }
-    .howto .tag {
-      display: inline-block;
-      background: rgba(255,255,255,.25);
-      border-radius: 30px;
-      padding: 2px 10px;
-      font-size: .8rem;
-      font-weight: 700;
-      margin-bottom: 8px;
-      letter-spacing: .5px;
-    }
-    .howto p { margin: 0; }
-    .howto .step {
-      display: flex;
-      gap: 8px;
-      align-items: flex-start;
-      margin-top: 6px;
-    }
-    .howto .num {
-      flex-shrink: 0;
-      width: 22px;
-      height: 22px;
-      background: rgba(255,255,255,.3);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: .78rem;
-      font-weight: 700;
-      margin-top: 1px;
-    }
-    .howto .say {
-      color: #ffe066;
-      font-weight: 700;
-    }
-
-    /* ── mic permission hint ── */
-    #micHint {
-      display: none;
-      background: rgba(255,255,255,.15);
-      border-radius: 12px;
-      padding: 12px 18px;
-      font-size: .9rem;
-      text-align: center;
-      max-width: 320px;
-    }
-  </style>
+  /* ── 3D Dice ── */
+  .dice-3d {
+    filter: drop-shadow(0 10px 15px rgba(67, 82, 165, 0.2));
+  }
+  .scene {
+    width: 140px;
+    height: 140px;
+    perspective: 600px;
+  }
+  .cube {
+    width: 140px;
+    height: 140px;
+    position: relative;
+    transform-style: preserve-3d;
+    transform: rotateX(0deg) rotateY(0deg);
+    transition: transform 1.2s ease-out;
+  }
+  .face {
+    position: absolute;
+    width: 140px;
+    height: 140px;
+    background: #ffffff;
+    border-radius: 1rem;
+    border: 3px solid #c6c5d3;
+    box-shadow: inset 0 0 12px rgba(67, 82, 165, 0.08);
+    display: grid;
+    padding: 16px;
+  }
+  .face.front  { transform: translateZ(70px); }
+  .face.back   { transform: rotateY(180deg) translateZ(70px); }
+  .face.left   { transform: rotateY(-90deg) translateZ(70px); }
+  .face.right  { transform: rotateY(90deg)  translateZ(70px); }
+  .face.top    { transform: rotateX(90deg)  translateZ(70px); }
+  .face.bottom { transform: rotateX(-90deg) translateZ(70px); }
+  .dot {
+    width: 20px;
+    height: 20px;
+    background: #4352a5;
+    border-radius: 50%;
+  }
+  .face-1 { place-items: center; }
+  .face-2 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+  .face-2 .dot:nth-child(1) { grid-column:1; grid-row:1; align-self:start; justify-self:start; }
+  .face-2 .dot:nth-child(2) { grid-column:2; grid-row:2; align-self:end;   justify-self:end;   }
+  .face-3 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; }
+  .face-3 .dot:nth-child(1) { grid-column:1; grid-row:1; align-self:start; justify-self:start; }
+  .face-3 .dot:nth-child(2) { grid-column:2; grid-row:2; place-self:center; }
+  .face-3 .dot:nth-child(3) { grid-column:2; grid-row:3; align-self:end;   justify-self:end;   }
+  .face-4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+  .face-4 .dot:nth-child(1) { align-self:start; justify-self:start; }
+  .face-4 .dot:nth-child(2) { align-self:start; justify-self:end;   }
+  .face-4 .dot:nth-child(3) { align-self:end;   justify-self:start; }
+  .face-4 .dot:nth-child(4) { align-self:end;   justify-self:end;   }
+  .face-5 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; }
+  .face-5 .dot:nth-child(1) { grid-column:1;   grid-row:1; align-self:start; justify-self:start; }
+  .face-5 .dot:nth-child(2) { grid-column:2;   grid-row:1; align-self:start; justify-self:end;   }
+  .face-5 .dot:nth-child(3) { grid-column:1/3; grid-row:2; place-self:center;                    }
+  .face-5 .dot:nth-child(4) { grid-column:1;   grid-row:3; align-self:end;   justify-self:start; }
+  .face-5 .dot:nth-child(5) { grid-column:2;   grid-row:3; align-self:end;   justify-self:end;   }
+  .face-6 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; }
+  .face-6 .dot:nth-child(1) { grid-column:1; grid-row:1; align-self:start; justify-self:start; }
+  .face-6 .dot:nth-child(2) { grid-column:2; grid-row:1; align-self:start; justify-self:end;   }
+  .face-6 .dot:nth-child(3) { grid-column:1; grid-row:2; place-self:center start; }
+  .face-6 .dot:nth-child(4) { grid-column:2; grid-row:2; place-self:center end; }
+  .face-6 .dot:nth-child(5) { grid-column:1; grid-row:3; align-self:end; justify-self:start; }
+  .face-6 .dot:nth-child(6) { grid-column:2; grid-row:3; align-self:end; justify-self:end;   }
+</style>
 </head>
-<body>
-
-<h1>🎲 陪玩飞行棋语音机器人</h1>
-
-<div class="howto">
-  <span class="tag">✨ 玩法说明</span>
-  <p>替代大人陪娃下飞行棋——机器人负责扔骰子，娃帮机器人走棋。</p>
-  <div class="step"><span class="num">1</span><span>点击「开始监听」，让机器人进入待命状态</span></div>
-  <div class="step"><span class="num">2</span><span>轮到机器人走棋时，说 <span class="say">「机器人，轮到你了」</span></span></div>
-  <div class="step"><span class="num">3</span><span>机器人自动扔骰子并语音播报点数，娃帮它在棋盘上走对应步数 🎉</span></div>
-</div>
-
-<div class="scene">
-  <div class="cube" id="cube">
-    <!-- 1 -->
-    <div class="face front face-1"><div class="dot"></div></div>
-    <!-- 6 -->
-    <div class="face back face-6">
-      <div class="dot"></div><div class="dot"></div>
-      <div class="dot"></div><div class="dot"></div>
-      <div class="dot"></div><div class="dot"></div>
-    </div>
-    <!-- 2 -->
-    <div class="face right face-2"><div class="dot"></div><div class="dot"></div></div>
-    <!-- 5 -->
-    <div class="face left face-5">
-      <div class="dot"></div><div class="dot"></div>
-      <div class="dot"></div>
-      <div class="dot"></div><div class="dot"></div>
-    </div>
-    <!-- 3 -->
-    <div class="face top face-3">
-      <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-    </div>
-    <!-- 4 -->
-    <div class="face bottom face-4">
-      <div class="dot"></div><div class="dot"></div>
-      <div class="dot"></div><div class="dot"></div>
-    </div>
+<body class="bg-background text-on-background font-body-md min-h-screen overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container bg-mesh">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-mobile py-base bg-surface shadow-[0px_8px_24px_rgba(67,82,165,0.1)] md:px-xl">
+  <div class="flex items-center gap-base">
+    <span class="material-symbols-outlined text-primary text-headline-md" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+    <h1 class="font-headline-md text-headline-md font-extrabold text-primary">Ludo Buddy</h1>
   </div>
-</div>
+</header>
 
-<div id="result"></div>
+<main class="pt-24 px-margin-mobile flex flex-col gap-lg bg-mesh relative pb-lg md:px-xl md:items-center md:max-w-screen-xl md:mx-auto">
+  <!-- Floating Stickers -->
+  <div class="absolute top-32 left-4 opacity-30 floating-accent pointer-events-none">
+    <span class="material-symbols-outlined text-primary text-xl">star</span>
+  </div>
+  <div class="absolute top-48 right-8 opacity-30 floating-accent pointer-events-none" style="animation-delay: 1s;">
+    <span class="material-symbols-outlined text-secondary text-xl">rocket_launch</span>
+  </div>
 
-<div class="controls">
-  <button id="toggleBtn">🎙️ 开始监听</button>
-  <div id="status">点击按钮开始语音监听</div>
-</div>
+  <!-- Intro Section -->
+  <section class="text-center">
+    <h2 class="font-headline-lg-mobile text-headline-lg-mobile text-primary mb-xs md:text-headline-lg">🎲 陪玩飞行棋语音机器人</h2>
+    <p class="text-on-surface-variant font-body-lg">小朋友的棋类游戏好玩伴</p>
+  </section>
 
-<div id="micHint">
-  🎤 需要麦克风权限才能使用语音功能。<br>
-  请在浏览器地址栏点击权限图标，允许访问麦克风后刷新页面。
-</div>
+  <!-- Dice Action Area -->
+  <section class="flex flex-col items-center justify-center py-lg relative">
+    <div class="w-48 h-48 bg-white/40 backdrop-blur-md rounded-xl flex items-center justify-center dice-3d border-4 border-white/60">
+      <div class="scene">
+        <div class="cube" id="cube">
+          <div class="face front face-1"><div class="dot"></div></div>
+          <div class="face back face-6">
+            <div class="dot"></div><div class="dot"></div>
+            <div class="dot"></div><div class="dot"></div>
+            <div class="dot"></div><div class="dot"></div>
+          </div>
+          <div class="face right face-2"><div class="dot"></div><div class="dot"></div></div>
+          <div class="face left face-5">
+            <div class="dot"></div><div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div><div class="dot"></div>
+          </div>
+          <div class="face top face-3">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          </div>
+          <div class="face bottom face-4">
+            <div class="dot"></div><div class="dot"></div>
+            <div class="dot"></div><div class="dot"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mt-base text-center text-on-surface-variant font-label-bold flex items-center gap-xs">
+      <span class="material-symbols-outlined text-secondary" id="resultIcon">tips_and_updates</span>
+      <span id="resultText">点击骰子让机器人准备</span>
+    </div>
+  </section>
+
+  <!-- Action Button -->
+  <section class="flex flex-col items-center gap-sm">
+    <button class="bubbly-button bg-secondary-container text-on-secondary-container h-[72px] px-xl rounded-full flex items-center gap-base font-headline-md text-headline-md active:translate-y-1" id="micBtn">
+      <span class="material-symbols-outlined text-3xl" id="micIcon">mic</span>
+      <span id="micLabel">🎙️ 开始监听</span>
+    </button>
+    <div id="status" class="text-on-surface-variant font-label-bold text-label-bold">点击按钮开始语音监听</div>
+  </section>
+
+  <!-- Instructions Card -->
+  <section class="bg-surface-container-lowest rounded-lg p-md shadow-[0px_8px_24px_rgba(67,82,165,0.08)] border-2 border-primary-container/10 md:max-w-2xl md:w-full">
+    <h3 class="font-headline-md text-primary mb-sm flex items-center gap-sm">
+      <span class="bg-primary-container/20 p-2 rounded-full flex items-center">
+        <span class="material-symbols-outlined text-primary">auto_fix_high</span>
+      </span>
+      玩法说明
+    </h3>
+    <p class="text-on-surface-variant mb-md leading-relaxed">
+      替代大人陪娃下飞行棋——机器人负责扔骰子，娃帮机器人走棋。
+    </p>
+    <div class="space-y-sm">
+      <div class="flex gap-base items-start group">
+        <span class="bg-tertiary-container text-on-tertiary-container w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-bold">1</span>
+        <p class="pt-1 text-on-surface">点击「开始监听」，让机器人进入待命状态</p>
+      </div>
+      <div class="flex gap-base items-start group">
+        <span class="bg-primary-container text-on-primary-container w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-bold">2</span>
+        <p class="pt-1 text-on-surface">轮到机器人走棋时，说 <span class="text-primary font-bold">「机器人，轮到你了」</span></p>
+      </div>
+      <div class="flex gap-base items-start group">
+        <span class="bg-secondary-container text-on-secondary-container w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-bold">3</span>
+        <p class="pt-1 text-on-surface">机器人自动扔骰子并语音播报点数，娃帮它在棋盘上走对应步数 🎉</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Permission Hint -->
+  <section class="bg-error-container/40 rounded-lg p-sm gap-sm border border-error-container md:max-w-2xl md:w-full hidden" id="micHint" style="display:none;">
+    <div class="flex gap-sm">
+      <span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">warning</span>
+      <p class="text-on-error-container text-label-bold">
+        🎤 需要麦克风权限才能使用语音功能。请在浏览器地址栏点击权限图标，允许访问麦克风后刷新页面。
+      </p>
+    </div>
+  </section>
+</main>
 
 <script>
   // ── 部署后请将此处替换为你的 Worker URL ──
@@ -309,20 +333,23 @@
   let totalY = 0;
 
   const cube = document.getElementById('cube');
-  const resultEl = document.getElementById('result');
-  const toggleBtn = document.getElementById('toggleBtn');
+  const resultText = document.getElementById('resultText');
+  const resultIcon = document.getElementById('resultIcon');
+  const micBtn = document.getElementById('micBtn');
+  const micIcon = document.getElementById('micIcon');
+  const micLabel = document.getElementById('micLabel');
   const statusEl = document.getElementById('status');
   const micHint = document.getElementById('micHint');
+
+  const DEFAULT_HINT = '点击骰子让机器人准备';
 
   // ── 骰子滚动 ──
   function rollDice(n) {
     const target = faceAngles[n];
-    // 当前最近的等效角度
     const baseX = totalX % 360;
     const baseY = totalY % 360;
     const deltaX = shortestDelta(baseX, target.x);
     const deltaY = shortestDelta(baseY, target.y);
-    // 附加 720~1080 度随机旋转
     const extraX = (Math.floor(Math.random() * 2) + 2) * 360 * (Math.random() < .5 ? 1 : -1);
     const extraY = (Math.floor(Math.random() * 2) + 2) * 360 * (Math.random() < .5 ? 1 : -1);
     totalX += deltaX + extraX;
@@ -337,10 +364,16 @@
   }
 
   function showResult(n) {
-    resultEl.textContent = `我扔了 ${n} 点`;
-    resultEl.classList.remove('show');
-    void resultEl.offsetWidth;
-    resultEl.classList.add('show');
+    resultText.classList.remove('show');
+    resultIcon.textContent = 'casino';
+    resultText.textContent = `我扔了 ${n} 点`;
+    void resultText.offsetWidth;
+    resultText.classList.add('show');
+  }
+
+  function resetHint() {
+    resultIcon.textContent = 'tips_and_updates';
+    resultText.textContent = DEFAULT_HINT;
   }
 
   function speak(text) {
@@ -356,7 +389,6 @@
     const n = Math.ceil(Math.random() * 6);
     rollDice(n);
     showResult(n);
-    // TTS 在动画结束后播报
     setTimeout(() => speak(ttsTexts[n]), 1250);
   }
 
@@ -370,22 +402,36 @@
   let capturedChunks = [];
   let loopId = null;
 
-  toggleBtn.addEventListener('click', () => {
+  micBtn.addEventListener('click', () => {
     if (listening) stopListening();
     else startListening();
   });
+
+  function setMicUI(isListening) {
+    if (isListening) {
+      micIcon.classList.add('animate-pulse');
+      micLabel.textContent = '⏹️ 正在监听...';
+      micBtn.classList.remove('bg-secondary-container', 'text-on-secondary-container');
+      micBtn.classList.add('bg-primary-container', 'text-on-primary-container', 'is-listening');
+    } else {
+      micIcon.classList.remove('animate-pulse');
+      micLabel.textContent = '🎙️ 开始监听';
+      micBtn.classList.remove('bg-primary-container', 'text-on-primary-container', 'is-listening');
+      micBtn.classList.add('bg-secondary-container', 'text-on-secondary-container');
+    }
+  }
 
   async function startListening() {
     try {
       mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch {
-      micHint.style.display = 'block';
+      micHint.style.display = 'flex';
+      micHint.classList.remove('hidden');
       setStatus('麦克风权限被拒绝，请查看下方提示');
       return;
     }
     listening = true;
-    toggleBtn.textContent = '⏹️ 停止监听';
-    toggleBtn.classList.add('active');
+    setMicUI(true);
     setupAudio();
     scheduleRecordCycle();
   }
@@ -398,9 +444,9 @@
     if (scriptProcessor) { scriptProcessor.disconnect(); scriptProcessor = null; }
     if (audioCtx) { audioCtx.close(); audioCtx = null; }
     if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
-    toggleBtn.textContent = '🎙️ 开始监听';
-    toggleBtn.classList.remove('active');
+    setMicUI(false);
     setStatus('已停止');
+    resetHint();
   }
 
   function setupAudio() {
@@ -412,7 +458,6 @@
     const src = audioCtx.createMediaStreamSource(mediaStream);
     src.connect(analyser);
 
-    // ScriptProcessor 捕获 PCM 原始样本
     scriptProcessor = audioCtx.createScriptProcessor(4096, 1, 1);
     src.connect(scriptProcessor);
     scriptProcessor.connect(audioCtx.destination);
@@ -526,6 +571,24 @@
 
   function setStatus(msg) {
     statusEl.textContent = msg;
+  }
+
+  // ── 背景装饰星星 ──
+  function createStar() {
+    const star = document.createElement('span');
+    star.className = 'material-symbols-outlined absolute pointer-events-none opacity-20';
+    star.style.left = Math.random() * 100 + 'vw';
+    star.style.top = Math.random() * 100 + 'vh';
+    star.style.fontSize = (Math.random() * 20 + 10) + 'px';
+    star.style.color = '#4352a5';
+    star.innerText = 'star';
+    star.style.animation = `float ${Math.random() * 3 + 3}s ease-in-out infinite`;
+    star.style.animationDelay = Math.random() * 2 + 's';
+    document.body.appendChild(star);
+  }
+
+  for (let i = 0; i < 8; i++) {
+    createStar();
   }
 </script>
 </body>
